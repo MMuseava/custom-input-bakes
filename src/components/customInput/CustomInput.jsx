@@ -8,7 +8,14 @@ const CustomInput = () => {
 
 	const handleFileChange = (event) => {
 		const files = Array.from(event.target.files);
-		setSelectedFiles([...selectedFiles, ...files]);
+		const newFiles = files.slice(0, 5 - selectedFiles.length);
+		setSelectedFiles([...selectedFiles, ...newFiles]);
+	};
+
+	const handleDelete = (index) => {
+		const updatedFiles = [...selectedFiles];
+		updatedFiles.splice(index, 1);
+		setSelectedFiles(updatedFiles);
 	};
 
 	const handleUpload = async () => {
@@ -32,27 +39,48 @@ const CustomInput = () => {
 	};
 
 	return (
-		<div>
-			<input type="file" onChange={handleFileChange} multiple />
+		<div className="custom-container">
+			<div className="custom-input">
+				<h2>Custom Input</h2>
 
-			<div>
-				{status === "uploading" && <p>Uploading...</p>}
-				{status === "success" && <p>✅Upload successful!</p>}
-				{status === "fail" && <p>❌Upload failed!</p>}
+				<input
+					type="file"
+					onChange={handleFileChange}
+					className="input-file"
+					multiple
+				/>
 			</div>
 
-			<div>
+			<div className="custom-uploading">
+				{status === "uploading" && <p>Uploading...</p>}
+				{status === "success" && (
+					<p className="success">✅ Upload successful!</p>
+				)}
+				{status === "fail" && <p className="fail">❌ Upload failed!</p>}
+			</div>
+
+			<div className="custom-image">
 				{selectedFiles.map((file, index) => (
-					<div key={index}>
-						<h3>{file.name}</h3>
+					<div key={index} className="image-box">
+						<h3 className="fileName">{file.name}</h3>
+
 						<img
 							className="image"
 							src={URL.createObjectURL(file)}
 							alt={`upload-preview-${index}`}
 						/>
+						<button className="delete" onClick={() => handleDelete(index)}>
+							x
+						</button>
 					</div>
 				))}
-				<button onClick={handleUpload} disabled={selectedFiles.length === 0}>
+			</div>
+			<div>
+				<button
+					className="uploadButton"
+					onClick={handleUpload}
+					disabled={selectedFiles.length === 0}
+				>
 					Upload {selectedFiles.length === 0 ? "a file" : "Files"}
 				</button>
 			</div>
