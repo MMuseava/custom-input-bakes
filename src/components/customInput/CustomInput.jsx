@@ -4,12 +4,15 @@ import "./customInput.style.scss";
 
 const CustomInput = () => {
 	const [selectedFiles, setSelectedFiles] = useState([]);
-	const [status, setStatus] = useState("initial");
 
 	const handleFileChange = (event) => {
 		const files = Array.from(event.target.files);
 		const newFiles = files.slice(0, 5 - selectedFiles.length);
-		setSelectedFiles([...selectedFiles, ...newFiles]);
+		const updatedFiles = newFiles.map((file) => ({
+			file: file,
+			status: "initial",
+		}));
+		setSelectedFiles([...selectedFiles, ...updatedFiles]);
 	};
 
 	const handleDelete = (index) => {
@@ -18,23 +21,32 @@ const CustomInput = () => {
 		setSelectedFiles(updatedFiles);
 	};
 
+	// const handleDeleteAll = () => {
+	// 	setSelectedFiles([]);
+	// };
+
 	const handleUpload = async () => {
 		if (selectedFiles.length > 0) {
-			setStatus("uploading");
-
-			const formData = new FormData();
-			selectedFiles.forEach((file, index) => {
-				formData.append(`file${index}`, file);
-			});
-
-			try {
-				const response = await axios.post("https://httpbin.org/post", formData);
-				console.log(response.data);
-				setStatus("success");
-			} catch (error) {
-				console.error(error);
-				setStatus("fail");
+			const updatedFiles = [...selectedFiles];
+			for (let i = 0; i < updatedFiles.length; i++) {
+				if (updatedFiles[i].status === "initial") {
+					updatedFiles[i].status = "uploading";
+					try {
+						const formData = new FormData();
+						formData.append("file", updatedFiles[i].file);
+						const response = await axios.post(
+							"https://httpbin.org/post",
+							formData
+						);
+						console.log(response.data);
+						updatedFiles[i].status = "success";
+					} catch (error) {
+						console.error(error);
+						updatedFiles[i].status = "fail";
+					}
+				}
 			}
+			setSelectedFiles(updatedFiles);
 		}
 	};
 
@@ -51,22 +63,14 @@ const CustomInput = () => {
 				/>
 			</div>
 
-			<div className="custom-uploading">
-				{status === "uploading" && <p>Uploading...</p>}
-				{status === "success" && (
-					<p className="success">✅ Upload successful!</p>
-				)}
-				{status === "fail" && <p className="fail">❌ Upload failed!</p>}
-			</div>
-
 			<div className="custom-image">
 				{selectedFiles.map((file, index) => (
 					<div key={index} className="image-box">
-						<h3 className="fileName">{file.name}</h3>
+						<h3 className="fileName">{file.file.name}</h3>
 
 						<img
 							className="image"
-							src={URL.createObjectURL(file)}
+							src={URL.createObjectURL(file.file)}
 							alt={`upload-preview-${index}`}
 						/>
 						<button className="delete" onClick={() => handleDelete(index)}>
@@ -83,6 +87,26 @@ const CustomInput = () => {
 				>
 					Upload {selectedFiles.length === 0 ? "a file" : "Files"}
 				</button>
+			</div>
+			<div className="custom-uploading">
+				{selectedFiles.map((file, index) => (
+					<div key={index} className="upload-status">
+						{file.status === "uploading" && <p>Uploading...</p>}
+						{file.status === "success" && (
+							<p className="success">✅ Upload successful!</p>
+						)}
+						{file.status === "fail" && (
+							<p className="fail">❌ Upload failed!</p>
+						)}
+					</div>
+				))}
+				{/* <button
+					className="deleteAllButton"
+					onClick={handleDeleteAll}
+					disabled={selectedFiles.length === 0}
+				>
+					Delete All
+				</button> */}
 			</div>
 		</div>
 	);
